@@ -7,7 +7,7 @@ func main() {
 
 	_, err := fmt.Scan(&n)
 	if err != nil {
-		fmt.Println("invalid N")
+		fmt.Println(err)
 
 		return
 	}
@@ -16,7 +16,7 @@ func main() {
 		var k int
 		_, err := fmt.Scan(&k)
 		if err != nil {
-			fmt.Println("invalid K")
+			fmt.Println(err)
 
 			return
 		}
@@ -32,7 +32,7 @@ func main() {
 
 			_, err := fmt.Scanf("%s %d", &op, &t)
 			if err != nil {
-				fmt.Println("invalid operation or T")
+				fmt.Println(err)
 
 				return
 			}
