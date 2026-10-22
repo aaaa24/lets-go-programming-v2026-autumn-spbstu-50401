@@ -13,7 +13,7 @@ func main() {
 	}
 
 	var employeeCount int
-	for i := 0; i < departmentCount; i++ {
+	for range departmentCount {
 		_, err := fmt.Scan(&employeeCount)
 		if err != nil {
 			fmt.Println(err)
@@ -28,7 +28,7 @@ func main() {
 			temperature int
 			operation   string
 		)
-		for j := 0; j < employeeCount; j++ {
+		for range employeeCount {
 			_, err := fmt.Scanf("%s %d", &operation, &temperature)
 			if err != nil {
 				fmt.Println(err)
