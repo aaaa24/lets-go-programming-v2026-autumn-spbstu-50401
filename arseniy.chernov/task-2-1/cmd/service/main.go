@@ -28,6 +28,7 @@ func main() {
 			temperature int
 			operation   string
 		)
+
 		for range employeeCount {
 			_, err := fmt.Scanf("%s %d", &operation, &temperature)
 			if err != nil {
