@@ -5,11 +5,33 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"go.yaml.in/yaml/v4"
 	"golang.org/x/text/encoding/charmap"
 )
+
+type Float float64
+
+func (f *Float) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var s string
+
+	err := d.DecodeElement(&s, &start)
+	if err != nil {
+		return err
+	}
+
+	s = strings.Replace(strings.TrimSpace(s), ",", ".", -1)
+
+	f64, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return err
+	}
+
+	*f = Float(f64)
+	return nil
+}
 
 type Config struct {
 	InputFile  string `yaml:"input-file"`
@@ -30,8 +52,8 @@ type Valute struct {
 	CharCode  string   `xml:"CharCode"`
 	Nominal   int      `xml:"Nominal"`
 	Name      string   `xml:"Name"`
-	Value     string   `xml:"Value"`
-	VunitRate string   `xml:"VunitRate"`
+	Value     Float    `xml:"Value"`
+	VunitRate Float    `xml:"VunitRate"`
 }
 
 func newDecoder(input io.Reader) *xml.Decoder {
