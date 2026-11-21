@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -111,6 +112,10 @@ func main() {
 	config := getConfig()
 
 	valCurs := getXmlData(config.InputFile)
+
+	sort.Slice(valCurs.ValuteItems, func(i, j int) bool {
+		return valCurs.ValuteItems[i].Value > valCurs.ValuteItems[j].Value
+	})
 
 	fmt.Printf("ValCurs: %v\n", valCurs)
 }
