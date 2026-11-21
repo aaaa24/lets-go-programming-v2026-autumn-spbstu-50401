@@ -64,6 +64,7 @@ func newDecoder(input io.Reader) *xml.Decoder {
 		}
 		return nil, fmt.Errorf("unsupported charset: %q", charset)
 	}
+
 	return d
 }
 
