@@ -45,7 +45,7 @@ func newDecoder(input io.Reader) *xml.Decoder {
 	return d
 }
 
-func getXmlData(path string, valCurs *ValCurs) {
+func getXmlData(path string) ValCurs {
 	xmlFile, err := os.Open(path)
 	if err != nil {
 		panic(err)
@@ -58,13 +58,17 @@ func getXmlData(path string, valCurs *ValCurs) {
 		}
 	}(xmlFile)
 
+	valCurs := ValCurs{}
+
 	decoder := newDecoder(xmlFile)
-	if err := decoder.Decode(valCurs); err != nil {
+	if err := decoder.Decode(&valCurs); err != nil {
 		panic(err)
 	}
+
+	return valCurs
 }
 
-func main() {
+func getConfig() Config {
 	configData, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		panic(err)
@@ -77,8 +81,13 @@ func main() {
 		panic(err)
 	}
 
-	valCurs := ValCurs{}
-	getXmlData(config.InputFile, &valCurs)
+	return config
+}
+
+func main() {
+	config := getConfig()
+
+	valCurs := getXmlData(config.InputFile)
 
 	fmt.Printf("ValCurs: %v\n", valCurs)
 }
