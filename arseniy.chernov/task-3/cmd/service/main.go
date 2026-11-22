@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -108,7 +109,10 @@ func readXML(path string) ValCurs {
 }
 
 func getConfig() Config {
-	configData, err := os.ReadFile(os.Args[1])
+	configPath := flag.String("config", "", "path to config file")
+	flag.Parse()
+
+	configData, err := os.ReadFile(*configPath)
 	if err != nil {
 		panic(err)
 	}
