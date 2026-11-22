@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -116,6 +117,13 @@ func getConfig() Config {
 }
 
 func writeJson(path string, data []ValuteOutput) {
+	dir := filepath.Dir(path)
+
+	err := os.MkdirAll(dir, 0o755)
+	if err != nil {
+		panic(err)
+	}
+
 	file, err := os.Create(path)
 	if err != nil {
 		panic(err)
