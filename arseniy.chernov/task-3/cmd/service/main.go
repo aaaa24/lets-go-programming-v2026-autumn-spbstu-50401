@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -18,21 +19,22 @@ import (
 type Float float64
 
 func (f *Float) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var s string
+	var str string
 
-	err := d.DecodeElement(&s, &start)
+	err := d.DecodeElement(&str, &start)
 	if err != nil {
-		return err
+		return fmt.Errorf("decode element: %w", err)
 	}
 
-	s = strings.Replace(strings.TrimSpace(s), ",", ".", -1)
+	str = strings.ReplaceAll(strings.TrimSpace(str), ",", ".")
 
-	f64, err := strconv.ParseFloat(s, 64)
+	f64, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		return err
+		return fmt.Errorf("parse float: %w", err)
 	}
 
 	*f = Float(f64)
+
 	return nil
 }
 
@@ -66,18 +68,19 @@ type ValuteOutput struct {
 }
 
 func newDecoder(input io.Reader) *xml.Decoder {
-	d := xml.NewDecoder(input)
-	d.CharsetReader = func(charset string, r io.Reader) (io.Reader, error) {
+	decoder := xml.NewDecoder(input)
+	decoder.CharsetReader = func(charset string, r io.Reader) (io.Reader, error) {
 		if strings.EqualFold(charset, "windows-1251") {
 			return charmap.Windows1251.NewDecoder().Reader(r), nil
 		}
-		return nil, fmt.Errorf("unsupported charset: %q", charset)
+		var errUnsupportedCharset = errors.New("unsupported charset")
+		return nil, fmt.Errorf("%w: %q", errUnsupportedCharset, charset)
 	}
 
-	return d
+	return decoder
 }
 
-func readXml(path string) ValCurs {
+func readXML(path string) ValCurs {
 	xmlFile, err := os.Open(path)
 	if err != nil {
 		panic(err)
@@ -90,7 +93,7 @@ func readXml(path string) ValCurs {
 		}
 	}(xmlFile)
 
-	valCurs := ValCurs{}
+	var valCurs ValCurs
 
 	decoder := newDecoder(xmlFile)
 	if err := decoder.Decode(&valCurs); err != nil {
@@ -116,7 +119,7 @@ func getConfig() Config {
 	return config
 }
 
-func writeJson(path string, data []ValuteOutput) {
+func writeJSON(path string, data []ValuteOutput) {
 	dir := filepath.Dir(path)
 
 	err := os.MkdirAll(dir, 0o755)
@@ -146,7 +149,7 @@ func writeJson(path string, data []ValuteOutput) {
 }
 
 func createValuteOutput(valCurs *ValCurs) []ValuteOutput {
-	var result []ValuteOutput
+	result := make([]ValuteOutput, 0, len(valCurs.ValuteItems))
 
 	for _, v := range valCurs.ValuteItems {
 		item := ValuteOutput{
@@ -163,12 +166,12 @@ func createValuteOutput(valCurs *ValCurs) []ValuteOutput {
 func main() {
 	config := getConfig()
 
-	valCurs := readXml(config.InputFile)
+	valCurs := readXML(config.InputFile)
 
 	sort.Slice(valCurs.ValuteItems, func(i, j int) bool {
 		return valCurs.ValuteItems[i].Value > valCurs.ValuteItems[j].Value
 	})
 
 	valuteOutput := createValuteOutput(&valCurs)
-	writeJson(config.OutputFile, valuteOutput)
+	writeJSON(config.OutputFile, valuteOutput)
 }
