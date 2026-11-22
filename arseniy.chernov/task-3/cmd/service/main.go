@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -49,12 +50,18 @@ type ValCurs struct {
 type Valute struct {
 	XMLName   xml.Name `xml:"Valute"`
 	ID        string   `xml:"ID,attr"`
-	NumCode   string   `xml:"NumCode"`
+	NumCode   int      `xml:"NumCode"`
 	CharCode  string   `xml:"CharCode"`
 	Nominal   int      `xml:"Nominal"`
 	Name      string   `xml:"Name"`
 	Value     Float    `xml:"Value"`
 	VunitRate Float    `xml:"VunitRate"`
+}
+
+type ValuteOutput struct {
+	NumCode  int     `json:"num_code"`
+	CharCode string  `json:"char_code"`
+	Value    float64 `json:"value"`
 }
 
 func newDecoder(input io.Reader) *xml.Decoder {
@@ -69,7 +76,7 @@ func newDecoder(input io.Reader) *xml.Decoder {
 	return d
 }
 
-func getXmlData(path string) ValCurs {
+func readXml(path string) ValCurs {
 	xmlFile, err := os.Open(path)
 	if err != nil {
 		panic(err)
@@ -108,14 +115,52 @@ func getConfig() Config {
 	return config
 }
 
+func writeJson(path string, data []ValuteOutput) {
+	file, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(file)
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+
+	err = encoder.Encode(data)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func createValuteOutput(valCurs *ValCurs) []ValuteOutput {
+	var result []ValuteOutput
+
+	for _, v := range valCurs.ValuteItems {
+		item := ValuteOutput{
+			NumCode:  v.NumCode,
+			CharCode: v.CharCode,
+			Value:    float64(v.Value),
+		}
+		result = append(result, item)
+	}
+
+	return result
+}
+
 func main() {
 	config := getConfig()
 
-	valCurs := getXmlData(config.InputFile)
+	valCurs := readXml(config.InputFile)
 
 	sort.Slice(valCurs.ValuteItems, func(i, j int) bool {
 		return valCurs.ValuteItems[i].Value > valCurs.ValuteItems[j].Value
 	})
 
-	fmt.Printf("ValCurs: %v\n", valCurs)
+	valuteOutput := createValuteOutput(&valCurs)
+	writeJson(config.OutputFile, valuteOutput)
 }
