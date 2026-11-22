@@ -28,6 +28,9 @@ func (f *Float) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	}
 
 	str = strings.ReplaceAll(strings.TrimSpace(str), ",", ".")
+	if str == "" {
+		return nil
+	}
 
 	f64, err := strconv.ParseFloat(str, 64)
 	if err != nil {
