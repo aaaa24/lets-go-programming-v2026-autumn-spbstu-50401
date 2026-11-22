@@ -67,13 +67,17 @@ type ValuteOutput struct {
 	Value    float64 `json:"value"`
 }
 
+var errUnsupportedCharset = errors.New("unsupported charset")
+
+const dirPerm = 0o755
+
 func newDecoder(input io.Reader) *xml.Decoder {
 	decoder := xml.NewDecoder(input)
 	decoder.CharsetReader = func(charset string, r io.Reader) (io.Reader, error) {
 		if strings.EqualFold(charset, "windows-1251") {
 			return charmap.Windows1251.NewDecoder().Reader(r), nil
 		}
-		var errUnsupportedCharset = errors.New("unsupported charset")
+
 		return nil, fmt.Errorf("%w: %q", errUnsupportedCharset, charset)
 	}
 
@@ -122,7 +126,7 @@ func getConfig() Config {
 func writeJSON(path string, data []ValuteOutput) {
 	dir := filepath.Dir(path)
 
-	err := os.MkdirAll(dir, 0o755)
+	err := os.MkdirAll(dir, dirPerm)
 	if err != nil {
 		panic(err)
 	}
